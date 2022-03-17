@@ -1,40 +1,59 @@
-from candidate.models import Candidate
-from candidate.serializer import CandidateSerializer
+from employer.models import CompanyProfile, Jobs
+from employer.serializer import EmployerSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.decorators import action
 from employer.serializer import JobSerializer
-from employer.models import Jobs
+from users.models import User
+from rest_framework import generics, mixins
 
 
 # Create your views here.
 
-
-
-
-class CandidateViewSet(viewsets.ModelViewSet):
-    queryset = Candidate.objects.all()
-    serializer_class =CandidateSerializer
-    model=Candidate
-
-    def list(self, request, *args, **kwargs):
-        candidate= Candidate.objects.all()
-        serializer = CandidateSerializer(candidate, many=True)
-        return Response(serializer.data)
-
+class EmployerView(viewsets.ModelViewSet):
+    model = CompanyProfile
+    serializer_class = EmployerSerializer
+    queryset = CompanyProfile.objects.all()
 
     def create(self, request, *args, **kwargs):
-        serializer=CandidateSerializer(data=request.data)
+        serializer = EmployerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return  Response(serializer.data,status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    #     api/v1/portal/candidate/matching_jobs
-    @action(methods=["GET"], detail=False)
-    def matching_jobs(self, request, *args, **kwargs):
-        jobs = Jobs.objects.filter(skills__contains=Candidate.skills)
-        serializer =JobSerializer(jobs, many=True)
+    def list(self, request, *args, **kwargs):
+        employer = CompanyProfile.objects.all()
+        serializer = EmployerSerializer(employer, many=True)
         return Response(serializer.data)
+
+
+# class UserCreationView(generics.GenericAPIView,
+#                        mixins.CreateModelMixin):
+#     serializer_class = EmployerSerializer
+#     queryset = User.objects.all()
+#     model = User
+#
+#     def get(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
+
+
+class JobsView(viewsets.ModelViewSet):
+    model = Jobs
+    serializers = JobSerializer
+    queryset = Jobs.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        job = Jobs.objects.all()
+        serializer = JobSerializer(job, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = JobSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
